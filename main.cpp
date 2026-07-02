@@ -2,6 +2,7 @@
 #include "glfw-3.4/include/GLFW/glfw3.h"
 #include <iostream>
 #include <math.h>
+#include "shader_program.h"
 
 const char* vertex_shader_sourcecode = 
     "#version 330 core\n"
@@ -67,49 +68,7 @@ int main() {
     // set the callback function for window resize
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-
-    unsigned int vertex_shader;
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    // 1 for 1 string passed
-    glShaderSource(vertex_shader, 1, &vertex_shader_sourcecode, nullptr);
-    glCompileShader(vertex_shader);
-    
-    /**  for shader compilation error checking
-     * int success;
-     * char infoLog[512];
-     * glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-     * if (!success) {
-     *     glGetShaderInfoLog(vertex_shader, 512, nullptr, infoLog);
-     *     std::cout << "Vertex shader compilation failed\n" << infoLog << std::endl;
-     * }
-     */
-
-
-    unsigned int fragment_shader;
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_sourcecode, nullptr);
-    glCompileShader(fragment_shader);
-
-
-    // object that links individual shaders together
-    unsigned int shader_program; 
-    shader_program = glCreateProgram();
-    glAttachShader(shader_program, vertex_shader);
-    glAttachShader(shader_program, fragment_shader);
-    glLinkProgram(shader_program);
-
-    /** for shader linking error checking
-     * int success;
-     * char infoLog[512];
-     * glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-     * if (!success) {
-     *     glGetProgramInfoLog(shader_program, 512, nullptr, infoLog);
-     *     std::cout << "Vertex shader linking failed\n" << infoLog << std::endl;
-     * }
-     */
-    
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
+    ShaderProgram shader_program{vertex_shader_sourcecode, fragment_shader_sourcecode};
 
     float vertices[] = {
         // positions         // colors
@@ -166,13 +125,14 @@ int main() {
 
         // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // for wireframe mode
 
-        glUseProgram(shader_program);   
+        shader_program.use_program();
+
         glBindVertexArray(vertex_array_object);
 
-        float time_value = glfwGetTime();
-        float green_value = (sin(time_value) / 2.0f) + 0.5f;
-        int uniformLocation = glGetUniformLocation(shader_program, "uniformColor");
-        glUniform4f(uniformLocation, 0.0f, green_value, 0.0f, 1.0f);
+        // float time_value = glfwGetTime();
+        // float green_value = (sin(time_value) / 2.0f) + 0.5f;
+        // int uniformLocation = glGetUniformLocation(shader_program, "uniformColor");
+        // glUniform4f(uniformLocation, 0.0f, green_value, 0.0f, 1.0f);
 
         // glDrawArrays(GL_TRIANGLES, 0, 3); // for drawing with only VBO, no EBO
         glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
