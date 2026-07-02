@@ -1,6 +1,7 @@
 #include "glad/include/glad/glad.h"
 #include "glfw-3.4/include/GLFW/glfw3.h"
 #include <iostream>
+#include <math.h>
 
 const char* vertex_shader_sourcecode = 
     "#version 330 core\n"
@@ -8,15 +9,17 @@ const char* vertex_shader_sourcecode =
     "void main()\n"
     "{\n"
     "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n" // output is bound to gl_Position
-    "}\0";
+    "}";
 
 const char* fragment_shader_sourcecode = 
     "#version 330 core\n"
-    "out vec4 FragColor;" // define vec4 FragColor as output 
+    "out vec4 FragColor;\n" // define vec4 FragColor as output 
+    "uniform vec4 uniformColor;\n"
     "void main()\n"
     "{\n"
-    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);" // assign color
-    "}\0";
+        // "FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);" // assign color
+        "FragColor = uniformColor;\n"
+    "}";
     
 
 // callback function everytime the user resizes the window
@@ -143,8 +146,8 @@ int main() {
     // feed the EBO vertex indices
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(square_indices), square_indices, GL_STATIC_DRAW);
 
-    // modifies VAO behavior
     // position attribute is at location 0. each position has 3 float components.
+    // snapshots whatever VBO is bound, allowing multiple bindings of VBO
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
     // enable the position attribute at location 0
     glEnableVertexAttribArray(0);
@@ -154,10 +157,8 @@ int main() {
     // unbind EBO NOT safe
     glBindVertexArray(0); // unbind VAO now safe
 
-
     while (!glfwWindowShouldClose(window)) {
         process_input(window);
-
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -166,6 +167,12 @@ int main() {
 
         glUseProgram(shader_program);   
         glBindVertexArray(vertex_array_object);
+
+        float time_value = glfwGetTime();
+        float green_value = (sin(time_value) / 2.0f) + 0.5f;
+        int uniformLocation = glGetUniformLocation(shader_program, "uniformColor");
+        glUniform4f(uniformLocation, 0.0f, green_value, 0.0f, 1.0f);
+
         // glDrawArrays(GL_TRIANGLES, 0, 3); // for drawing with only VBO, no EBO
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
