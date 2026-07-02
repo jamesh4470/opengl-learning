@@ -5,20 +5,26 @@
 
 const char* vertex_shader_sourcecode = 
     "#version 330 core\n"
+
     "layout (location = 0) in vec3 aPos;\n" // define input as vec3, store in aPos
+    "layout (location = 1) in vec3 aColor;\n"
+    "out vec3 shaderColor;\n"
+
     "void main()\n"
     "{\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n" // output is bound to gl_Position
+        "gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n" // output is bound to gl_Position
+        "shaderColor = aColor;\n"
     "}";
 
 const char* fragment_shader_sourcecode = 
     "#version 330 core\n"
+
+    "in vec3 shaderColor;\n" // from the vertex shader
     "out vec4 FragColor;\n" // define vec4 FragColor as output 
-    "uniform vec4 uniformColor;\n"
+
     "void main()\n"
     "{\n"
-        // "FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);" // assign color
-        "FragColor = uniformColor;\n"
+        "FragColor = vec4(shaderColor, 1.0);\n"
     "}";
     
 
@@ -105,22 +111,14 @@ int main() {
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
 
-
-    // in normalized device coordinates, between -1 and 1
-    float triangle_vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.0f, 0.5f, 0.0f
+    float vertices[] = {
+        // positions         // colors
+         0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
+        -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
+         0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
     };
-    float square_vertices[] = {
-        0.5f, 0.5f, 0.0f,   // top right
-        0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f, // bottom left
-        -0.5f, 0.5f, 0.0f   // top left 
-    };
-    unsigned int square_indices[] = {
-        0, 1, 3,   // first triangle
-        1, 2, 3    // second triangle
+    unsigned int indices[] = {
+        0, 1, 2
     };
 
 
@@ -139,18 +137,21 @@ int main() {
     // bind and send data to VBO
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
     // copy data into whatever's bound to GL_ARRAY_BUFFER, copies vertices into VBO
-    glBufferData(GL_ARRAY_BUFFER, sizeof(square_vertices), square_vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     // bind and send data to EBO
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_object);
     // feed the EBO vertex indices
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(square_indices), square_indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    // position attribute is at location 0. each position has 3 float components.
     // snapshots whatever VBO is bound, allowing multiple bindings of VBO
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
-    // enable the position attribute at location 0
+    // VBO position attribute configuration
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
     glEnableVertexAttribArray(0);
+
+    // VBO color attribute configuration
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
 
     glBindBuffer(GL_ARRAY_BUFFER, 0); // unbind VBO now safe
@@ -163,7 +164,7 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // for wireframe mode
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // for wireframe mode
 
         glUseProgram(shader_program);   
         glBindVertexArray(vertex_array_object);
@@ -174,7 +175,7 @@ int main() {
         glUniform4f(uniformLocation, 0.0f, green_value, 0.0f, 1.0f);
 
         // glDrawArrays(GL_TRIANGLES, 0, 3); // for drawing with only VBO, no EBO
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
         glfwPollEvents(); // checks if events are triggered and calls callback functions if so
